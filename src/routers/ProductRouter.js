@@ -9,13 +9,11 @@ const { checkInput } = require("../controllers/middleWares");
 const ProductModel = require("../models/ProductModel");
 const { protectRouteMiddleWare, isAuthorizedMiddleWare } = require("../controllers/AuthController");
 /***********products***********/
-ProductRouter.post("/", checkInput,
-    protectRouteMiddleWare, isAuthorizedMiddleWare(['admin', 'seller']),
-    createProductHandler);
-ProductRouter.get("/", getAllProductHandler);
-ProductRouter.get("/:elementId", getProductById);
-ProductRouter.delete("/:elementId", isAuthorizedMiddleWare(['admin', 'seller']), deleteProductById);
-module.exports = ProductRouter;
+const getProductCategories = (req, res) => {
+    res.status(200).json({
+        data: ["electronics","jewelery","men's clothing","women's clothing"]
+    });
+}
 
 async function getAllProductHandler(req, res) {
     try {
@@ -65,3 +63,13 @@ async function getAllProductHandler(req, res) {
     // sorting -> increarsing 
     // selecting -> (name,price)
 }
+
+ProductRouter.post("/", checkInput,
+    protectRouteMiddleWare, isAuthorizedMiddleWare(['admin', 'seller']),
+    createProductHandler);
+ProductRouter.get("/", getAllProductHandler);
+ProductRouter.get('/categories', getProductCategories);
+ProductRouter.get("/:elementId", getProductById);
+ProductRouter.delete("/:elementId", isAuthorizedMiddleWare(['admin', 'seller']), deleteProductById);
+
+module.exports = ProductRouter;
