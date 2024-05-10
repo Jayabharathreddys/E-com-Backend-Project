@@ -4,8 +4,8 @@
   "license": "MIT",
   "main": "src",
   "scripts": {
-    "start": "node src/app.js",
-    "dev": "nodemon src/app.js"
+    "start": "node app.js",
+    "dev": "nodemon app.js"
   },
   "nodemonConfig": {
     "watch": [
