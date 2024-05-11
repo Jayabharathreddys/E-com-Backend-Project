@@ -3,8 +3,13 @@ const express = require("express");
 const dotenv = require("dotenv");
 const mongoose = require("mongoose");
 const cookieParser = require("cookie-parser");
-const cors = require("cors");
 const xss = require("xss");
+const cors = require('cors');
+
+const corsConfig = {
+    origin: true,
+    // credentials: true,
+}
 // including env variables
 dotenv.config();
 const { PORT, DB_PASSWORD, DB_USER } = process.env;
@@ -23,12 +28,13 @@ const ProductRouter = require("./src/routers/ProductRouter");
 const AuthRouter = require("./src/routers/AuthRouter");
 const BookingRouter = require("./src/routers/BookingRouter");
 const ReviewRouter = require("./src/routers/ReviewRouter");
-app.use(cors());
+app.use(cors(corsConfig));
+app.options('*', cors(corsConfig));
 app.use(express.json());
 app.use(cookieParser());
 app.use((req, res, next)=>{
     res.setHeader('Access-Control-Allow-origin', '*');
-    res.setHeader('x-api-key', 'hgsafd37246378v72343');
+    // res.setHeader('x-api-key', 'hgsafd37246378v72343');
     next();
 });
 
