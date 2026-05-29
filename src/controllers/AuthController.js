@@ -23,9 +23,16 @@ const HtmlTemplateString = fs.readFileSync(pathToOtpHTML, "utf-8");
 
 const signupController = async(req, res) => {
     try {
-        // add it to the db 
+        // add it to the db
         const userObject = req.body;
 
+        // validate passwords match
+        if (!userObject.password || !userObject.confirmPassword) {
+            return res.status(400).json({ status: "failure", message: "password and confirmPassword are required" });
+        }
+        if (userObject.password !== userObject.confirmPassword) {
+            return res.status(400).json({ status: "failure", message: "passwords do not match" });
+        }
 
         const encryptPwd = encrypt(userObject.password);
         const encryptConfirmPwd = encrypt(userObject.confirmPassword);

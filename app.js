@@ -6,12 +6,13 @@ const cookieParser = require("cookie-parser");
 const xss = require("xss");
 const cors = require('cors');
 
-const corsConfig = {
-    origin: process.env.ALLOWED_ORIGIN || true,
-    credentials: true,
-}
 // including env variables
 dotenv.config();
+
+const corsConfig = {
+    origin: process.env.ALLOWED_ORIGIN || "http://localhost:5173",
+    credentials: true,
+}
 const { PORT, DB_PASSWORD, DB_USER, DB_CLUSTER } = process.env;
 /**********************connection to our DB********************************/
 const dbURL = `mongodb+srv://${DB_USER}:${DB_PASSWORD}@${DB_CLUSTER || "cluster0.jdq8n60.mongodb.net"}/?retryWrites=true&w=majority`;
@@ -65,10 +66,14 @@ app.use(function cb(req, res) {
         message: " route not found"
     })
 });
-// server -> run on a port 
-app.listen(PORT, function () {
-    console.log(` server is listening to port ${PORT}`);
-})
+// server -> run on a port
+if (require.main === module) {
+    app.listen(PORT, function () {
+        console.log(` server is listening to port ${PORT}`);
+    });
+}
+
+module.exports = app;
 
 /***
  * At code level -> prevent Repetiton -> Factory(controllers)
