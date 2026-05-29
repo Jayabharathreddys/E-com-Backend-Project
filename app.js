@@ -7,8 +7,8 @@ const xss = require("xss");
 const cors = require('cors');
 
 const corsConfig = {
-    origin: true,
-    // credentials: true,
+    origin: process.env.ALLOWED_ORIGIN || true,
+    credentials: true,
 }
 // including env variables
 dotenv.config();
