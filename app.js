@@ -12,9 +12,9 @@ const corsConfig = {
 }
 // including env variables
 dotenv.config();
-const { PORT, DB_PASSWORD, DB_USER } = process.env;
+const { PORT, DB_PASSWORD, DB_USER, DB_CLUSTER } = process.env;
 /**********************connection to our DB********************************/
-const dbURL = `mongodb+srv://${DB_USER}:${DB_PASSWORD}@cluster0.jdq8n60.mongodb.net/?retryWrites=true&w=majority`;
+const dbURL = `mongodb+srv://${DB_USER}:${DB_PASSWORD}@${DB_CLUSTER || "cluster0.jdq8n60.mongodb.net"}/?retryWrites=true&w=majority`;
 // once 
 mongoose.connect(dbURL)
     .then(function (connection) {

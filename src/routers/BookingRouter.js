@@ -9,10 +9,9 @@ const UserModel = require("../models/UserModel");
 
 const BookingRouter = express.Router();
 
-const { PUBLIC_KEY, PRIVATE_KEY, WEBHOOK_SECRET } = process.env;
-const razorpayInstance = new Razorpay({
-    key_id: PUBLIC_KEY,
-    key_secret: PRIVATE_KEY,
+const getRazorpayInstance = () => new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID,
+    key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 const initialBookingController = async (req, res) => {
@@ -53,7 +52,7 @@ const initialBookingController = async (req, res) => {
             payment_capture: payment_capture
         };
 
-        const orderObj = await razorpayInstance.orders.create(options);
+        const orderObj = await getRazorpayInstance().orders.create(options);
 
         bookingObj.orderId = orderObj.id;
 
@@ -97,6 +96,7 @@ const getAllBookings = async (req, res) => {
 const verifyPaymentController = async(req, res) => {
       try {
 
+        const { WEBHOOK_SECRET } = process.env;
         if(!WEBHOOK_SECRET) {
             throw new Error('Webhook secret key is not defined!');
         }
