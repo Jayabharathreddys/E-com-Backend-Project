@@ -74,17 +74,3 @@ if (require.main === module) {
 }
 
 module.exports = app;
-
-/***
- * At code level -> prevent Repetiton -> Factory(controllers)
- * At file level -> structure to segregate the code  -> MVC
- * **/
-
-
-
-
-
-
-
-
-

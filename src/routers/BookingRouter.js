@@ -1,137 +1,91 @@
 const express = require("express");
-const shortid = require('shortid');
-
-
-const Razorpay = require("razorpay");
+const BookingRouter = express.Router();
+const shortid = require("shortid");
+const crypto = require("crypto");
 const BookingModel = require("../models/BookingModel");
 const { protectRouteMiddleWare } = require("../controllers/AuthController");
+const Razorpay = require("razorpay");
 const UserModel = require("../models/UserModel");
 
-const BookingRouter = express.Router();
-
 const getRazorpayInstance = () => new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID,
+    key_id:    process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
 const initialBookingController = async (req, res) => {
-
     const userId = req.userId;
     const { productId } = req.params;
-    console.log('productId', productId);
-    const { priceAtThatTime } = req.body;
-    const status = 'pending';
- 
+    const { quantity = 1 } = req.body;
+
     try {
-       // write the logic to book the products (that means create the orders).
+        const bookingObject = await BookingModel.create({
+            user:    userId,
+            product: productId,
+            status:  "pending"
+        });
 
-       const bookingObj = await BookingModel.create({
-            id: userId,
-            productid: productId,
-            priceAtThatTime: priceAtThatTime,
-            status: status
-       });
+        const userObject = await UserModel.findById(userId);
+        if (userObject) {
+            userObject.bookings.push(bookingObject._id);
+            await userObject.save();
+        }
 
-       console.log(bookingObj);
-
-       const userObj =  await UserModel.findById(userId);
-
-       userObj.bookings.push(bookingObj['_id']);
-       await userObj.save();
-
-       console.log(userObj);
-
-       const amount = bookingObj.priceAtThatTime;
-       const currency = 'INR';
-       const payment_capture = 1;
-
-        let options = {
-            amount: amount * 100,  // amount in the smallest currency unit
-            currency: currency,
-            receipt: bookingObj['_id'],
-            payment_capture: payment_capture
+        const options = {
+            amount:          quantity * 100,   // paise; frontend sends price or quantity
+            currency:        "INR",
+            receipt:         shortid.generate(),
+            payment_capture: 1
         };
 
-        const orderObj = await getRazorpayInstance().orders.create(options);
-
-        bookingObj.orderId = orderObj.id;
-
-        await bookingObj.save();
+        const orderObject = await getRazorpayInstance().orders.create(options);
+        bookingObject.payment_order_id = orderObject.id;
+        await bookingObject.save();
 
         res.status(200).json({
-            status: "success",
-            message: "Your order has been successfully placed",
-            data: {
-                id: orderObj.id,
-                currency: orderObj.currency,
-                amount: orderObj.amount
-            }
-        })
-
-
-       
-
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({
-            status: "failure",
-            message: err.message
+            status:   "success",
+            message:  "Order placed successfully",
+            id:       orderObject.id,
+            currency: orderObject.currency,
+            amount:   orderObject.amount
         });
+    } catch (err) {
+        res.status(500).json({ status: "failure", message: err.message });
     }
-}
+};
 
 const getAllBookings = async (req, res) => {
     try {
-      // write the logic to get all booking data
-
+        const allBookings = await BookingModel.find();
+        res.status(200).json({
+            status:  "success",
+            message: "All bookings fetched successfully",
+            data:    { allBookings }
+        });
     } catch (err) {
-        res.status(500).json({
-            status: "failure",
-            message: err.message
-        })
+        res.status(500).json({ status: "failure", message: err.message });
     }
-}
+};
 
-// This will be done during frontend integration
-const verifyPaymentController = async(req, res) => {
-      try {
-
+const verifyPaymentController = async (req, res) => {
+    try {
         const { WEBHOOK_SECRET } = process.env;
-        if(!WEBHOOK_SECRET) {
-            throw new Error('Webhook secret key is not defined!');
+        const shasum = crypto.createHmac("sha256", WEBHOOK_SECRET || "");
+        shasum.update(JSON.stringify(req.body));
+        const freshSignature = shasum.digest("hex");
+        const razorPaySign   = req.headers["x-razorpay-signature"];
+
+        if (freshSignature === razorPaySign) {
+            res.status(200).json({ message: "OK" });
+        } else {
+            res.status(403).json({ message: "Invalid signature" });
         }
-
-        console.log(WEBHOOK_SECRET);
-
-        const { body, headers } = req;
-
-        console.log(body, headers);
-
-        const freshSignature = crypto.createHmac('sha256', WEBHOOK_SECRET).update(JSON.stringify(body)).digest('hex');
-
-        console.log(freshSignature);
-
-        const razorpaySignature = headers['x-razorpay-signature'];
-
-        if(!razorpaySignature) {
-            throw new Error('x-razorpay-signature is not being set in the headers')
-        }
-
-        if(freshSignature === razorpaySignature) {
-            return res.status(200).json({
-                message: 'ok'
-            })
-        }
-    } catch (error) {
-        res.status(500).json({
-            status: "failure",
-            message: "Internal Server Error"
-        })  
+    } catch (err) {
+        res.status(500).json({ status: "failure", message: err.message });
     }
-}
+};
 
 BookingRouter.post("/:productId", protectRouteMiddleWare, initialBookingController);
-BookingRouter.post("/verify", protectRouteMiddleWare, verifyPaymentController);
-BookingRouter.get("/", getAllBookings);
+BookingRouter.post("/verify",     protectRouteMiddleWare, verifyPaymentController);
+BookingRouter.get("/",            getAllBookings);
 
 module.exports = BookingRouter;

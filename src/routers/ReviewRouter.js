@@ -4,18 +4,21 @@ const ReviewModel = require("../models/ReviewModel");
 const { protectRouteMiddleWare } = require("../controllers/AuthController");
 const ProductModel = require("../models/ProductModel");
 
-const createReviewController = async(req, res) =>{
+const createReviewController = async (req, res) => {
     try {
-        // do implementation 
-        // give a particular rating to a product with review
-        // calculate avg rating as well
-        // push that review data in the productModel
-        const { review, rating }  = req.body;
+        const { review, rating } = req.body;
         const { productId } = req.params;
-        console.log(productId);
         const userId = req.userId;
 
-        const reviewObject =  await ReviewModel.create({
+        // Input validation
+        if (!review || !rating) {
+            return res.status(400).json({ status: "failure", message: "review and rating are required" });
+        }
+        if (rating < 1 || rating > 5) {
+            return res.status(400).json({ status: "failure", message: "rating must be between 1 and 5" });
+        }
+
+        const reviewObject = await ReviewModel.create({
             review,
             rating,
             product: productId,
@@ -23,71 +26,59 @@ const createReviewController = async(req, res) =>{
         });
 
         const productObject = await ProductModel.findById(productId);
-        const averageRating = productObject.averageRating;
+        if (!productObject) {
+            return res.status(404).json({ status: "failure", message: "product not found" });
+        }
 
-        if(Number(averageRating)){
-           let sum = averageRating * productObject.reviews.length;
-           console.log(sum);
-
-           let finalAvgRating = (sum + reviewObject.rating) / (productObject.reviews.length + 1); // (sum of all the ratings including average rating)/ number of reviews
-
-           productObject.averageRating = finalAvgRating;
-             console.log('review object', reviewObject)
+        // Recalculate running average
+        if (Number(productObject.averageRating)) {
+            const sum = productObject.averageRating * productObject.reviews.length;
+            productObject.averageRating = (sum + reviewObject.rating) / (productObject.reviews.length + 1);
         } else {
             productObject.averageRating = reviewObject.rating;
         }
 
-        productObject.reviews.push(reviewObject['_id']);
+        productObject.reviews.push(reviewObject._id);
         await productObject.save();
-        console.log(reviewObject);
 
         res.status(201).json({
-            satus: "success",
+            status: "success",
             data: reviewObject
         });
-
     } catch (err) {
-        res.status(500).json({
-            status: "failure",
-            message: err.message
-        })
+        res.status(500).json({ status: "failure", message: err.message });
     }
-}
+};
 
-const getAllReviewForAProductController = async(req, res)  => {
+const getAllReviewForAProductController = async (req, res) => {
     try {
-        // Get the product ID from the request parameters or query string
-        const productId = req.params.productId;
-        console.log(productId);
+        const { productId } = req.params;
+        const page  = Math.max(1, parseInt(req.query.page)  || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 10));
+        const skip  = (page - 1) * limit;
 
-        // Pagination parameters
-        console.log(req.query);
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 20;
-        const skip = (page - 1) * limit;
+        const [reviews, total] = await Promise.all([
+            ReviewModel.find({ product: productId })
+                .populate("user", "name")   // include reviewer name
+                .sort({ createdAt: -1 })    // newest first
+                .skip(skip)
+                .limit(limit),
+            ReviewModel.countDocuments({ product: productId })
+        ]);
 
-        // Query the database to fetch all reviews associated with the product
-        const reviews = await ReviewModel.find({ product: productId })
-            .skip(skip)
-            .limit(limit)
-            .exec();
-
-        // Send the retrieved reviews as a response
         res.status(200).json({
             status: "success",
+            total,
+            page,
+            totalPages: Math.ceil(total / limit),
             data: reviews
         });
     } catch (err) {
-        // Handle errors
-        res.status(500).json({
-            status: "failure",
-            message: err.message
-        });
+        res.status(500).json({ status: "failure", message: err.message });
     }
-}
+};
 
 ReviewRouter.post("/:productId", protectRouteMiddleWare, createReviewController);
-
 ReviewRouter.get("/:productId", getAllReviewForAProductController);
 
 module.exports = ReviewRouter;

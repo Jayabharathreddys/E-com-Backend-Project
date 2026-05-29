@@ -283,13 +283,9 @@ const isAuthorizedMiddleWare = function (allowedRoles) {
 
 
 const logoutController = function (req, res) {
-    res.cookie("JWT", "dsjfbmdjbhsf", { maxAge: Date.now(), httpOnly: true, path: "/" });
-
-    res.status(200).json({
-        status: "success",
-        message: "user logged out "
-    })
-}
+    res.cookie('JWT', '', { maxAge: 0, httpOnly: true, path: '/' });
+    res.status(200).json({ status: 'success', message: 'logged out' });
+};
 
 module.exports = {
     signupController,
@@ -300,4 +296,4 @@ module.exports = {
     isAdminMiddleWare,
     isAuthorizedMiddleWare,
     logoutController
-}
+};
