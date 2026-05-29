@@ -33,11 +33,6 @@ app.use(cors(corsConfig));
 app.options('*', cors(corsConfig));
 app.use(express.json());
 app.use(cookieParser());
-app.use((req, res, next)=>{
-    res.setHeader('Access-Control-Allow-origin', '*');
-    // res.setHeader('x-api-key', 'hgsafd37246378v72343');
-    next();
-});
 
 app.get('/route', (req, res)=>{
 
