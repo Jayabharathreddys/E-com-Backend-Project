@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8"/>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f4f6fb; margin: 0; padding: 0; }
+    .container { max-width: 560px; margin: 40px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .header { background: #3d5a99; color: #fff; padding: 28px 32px; }
+    .header h1 { margin: 0; font-size: 22px; }
+    .body { padding: 32px; color: #333; }
+    .body p { font-size: 15px; line-height: 1.6; }
+    .order-box { background: #f0f4ff; border-left: 4px solid #3d5a99; padding: 16px 20px; border-radius: 4px; margin: 20px 0; }
+    .order-box p { margin: 6px 0; font-size: 14px; }
+    .amount { font-size: 24px; font-weight: bold; color: #3d5a99; }
+    .footer { background: #f4f6fb; padding: 18px 32px; font-size: 12px; color: #888; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>&#10003; Order Confirmed!</h1>
+    </div>
+    <div class="body">
+      <p>Hi <strong>#{USER_NAME}</strong>,</p>
+      <p>Thank you for shopping with <strong>JBE Commerce</strong>! Your payment has been successfully received.</p>
+      <div class="order-box">
+        <p><strong>Amount Paid:</strong> <span class="amount">Rs. #{AMOUNT}</span></p>
+        <p><strong>Order ID:</strong> #{ORDER_ID}</p>
+        <p><strong>Payment ID:</strong> #{PAYMENT_ID}</p>
+      </div>
+      <p>Your order is being processed and will be shipped shortly. You will receive a shipping confirmation email once dispatched.</p>
+      <p>If you have any questions, reply to this email or contact our support team.</p>
+      <p>Happy Shopping! 🛍️</p>
+    </div>
+    <div class="footer">
+      &copy; 2025 JBE Commerce. All rights reserved.
+    </div>
+  </div>
+</body>
+</html>

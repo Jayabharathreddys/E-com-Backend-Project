@@ -78,7 +78,7 @@ const loginController = async(req, res) => {
                 // payload : id of that user 
                 let token = await promisifiedJWTSign({ id: user["_id"] }, SECRET_KEY);
                 console.log("sendning token");
-                res.cookie("JWT", token, { maxAge: 90000000, httpOnly: true, path: "/" });
+                res.cookie("JWT", token, { maxAge: 90000000, httpOnly: true, path: "/", sameSite: "none", secure: true });
                 res.status(200).json({
                     status: "success",
                     message: "user logged In"
@@ -283,7 +283,7 @@ const isAuthorizedMiddleWare = function (allowedRoles) {
 
 
 const logoutController = function (req, res) {
-    res.cookie('JWT', '', { maxAge: 0, httpOnly: true, path: '/' });
+    res.cookie('JWT', '', { maxAge: 0, httpOnly: true, path: '/', sameSite: 'none', secure: true });
     res.status(200).json({ status: 'success', message: 'logged out' });
 };
 
